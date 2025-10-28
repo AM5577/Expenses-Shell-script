@@ -47,6 +47,15 @@ VALIDATE $? "Enabling MYSQL service"
 systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting MySQL server"
 
+# Set root password
+echo "ALTER USER 'root'@'localhost' IDENTIFIED BY 'ExpenseApp@1';" > /tmp/mysql-init.sql
+systemctl stop mysqld
+mysqld --init-file=/tmp/mysql-init.sql --user=mysql &
+sleep 10
+kill %1
+systemctl start mysqld
+
+# Secure MySQL installation
 mysql_secure_installation <<EOF
 ExpenseApp@1
 n
@@ -55,7 +64,5 @@ y
 y
 y
 EOF
-VALIDATE $? "Reset of password MySQL server"
-
 
 
