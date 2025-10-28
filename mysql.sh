@@ -11,6 +11,9 @@ LOG_FILE=$( echo $0 | cut -d "." -f1 )
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
 LOG_FILE_NAME="$LOGS_FOLDER/$LOG_FILE-$TIMESTAMP.log"
 
+# Define MySQL root password
+MYSQL_ROOT_PASSWORD="ExpenseApp@1"   
+
 # create logs folders if do not exist
 
 mkdir -p /var/log/expense-script-logs/
@@ -47,22 +50,23 @@ VALIDATE $? "Enabling MYSQL service"
 systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting MySQL server"
 
-# Set root password
-echo "ALTER USER 'root'@'localhost' IDENTIFIED BY 'ExpenseApp@1';" > /tmp/mysql-init.sql
-systemctl stop mysqld
-mysqld --init-file=/tmp/mysql-init.sql --user=mysql &
-sleep 10
-kill %1
-systemctl start mysqld
+# Wait briefly for service to fully start
+sleep 5
 
-# Secure MySQL installation
-mysql_secure_installation <<EOF
-ExpenseApp@1
-n
-y
-y
-y
-y
-EOF
+echo "============================================"
+echo " Securing MySQL Installation "
+echo "============================================"
 
+# Secure MySQL by running SQL directly (non-interactive)
+sudo mysql --connect-expired-password -e "
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+DELETE FROM mysql.user WHERE User='';
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+FLUSH PRIVILEGES;
+"
 
+echo "============================================"
+echo " MySQL Installation Completed Successfully "
+echo " Root password: ${MYSQL_ROOT_PASSWORD}"
+echo "============================================"
