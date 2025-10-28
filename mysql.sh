@@ -58,11 +58,37 @@ VALIDATE $? "Starting MySQL server"
 
 sleep 5
 
+
 echo "============================================"
-echo " 6. Setting up MySQL root user"
+echo " 6. Detecting or resetting MySQL root password"
 echo "============================================"
-sudo mysql --connect-expired-password <<EOF
+
+TEMP_PASS=$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}' | tail -1 || true)
+
+if [ -n "$TEMP_PASS" ]; then
+  echo "→ Found temporary password; using it to set new password"
+  sudo mysql --connect-expired-password -u root -p"${TEMP_PASS}" <<EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+EOF
+else
+  echo "→ No temporary password found; resetting root password using skip-grant-tables"
+  sudo systemctl stop mysqld
+  sudo mysqld_safe --skip-grant-tables &
+  sleep 5
+  sudo mysql <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+FLUSH PRIVILEGES;
+EOF
+  sudo pkill mysqld || true
+  sleep 3
+  sudo systemctl start mysqld
+fi
+
+echo "============================================"
+echo " 7. Securing MySQL"
+echo "============================================"
+
+sudo mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
