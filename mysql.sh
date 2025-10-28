@@ -44,7 +44,7 @@ CHECK_ROOT
 dnf install mysql-server -y &>>$LOG_FILE_NAME
 VALIDATE $? "Installing MYSQL server"
 
-systemctl enable mysqld &>>$LOG_FILE_NAME
+systemctl enable --now mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Enabling MYSQL service"
 
 systemctl start mysqld &>>$LOG_FILE_NAME
@@ -57,14 +57,14 @@ echo "============================================"
 echo " Securing MySQL Installation "
 echo "============================================"
 
-# Secure MySQL by running SQL directly (non-interactive)
-sudo mysql --connect-expired-password -e "
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+# Step 1: Connect via socket authentication (as system root) and switch to password auth
+sudo mysql -u root <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
-"
+EOF
 
 echo "============================================"
 echo " MySQL Installation Completed Successfully "
