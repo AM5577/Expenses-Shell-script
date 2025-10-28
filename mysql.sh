@@ -49,8 +49,11 @@ VALIDATE $? "Starting mysql server"
 
 sleep 5
 
-# Try to set root password without password first
-mysql --user=root --skip-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ExpenseApp@1';" &>>$LOG_FILE_NAME
+echo "Setting up MySQL root password..." &>>$LOG_FILE_NAME
+sudo mysql <<EOF &>>$LOG_FILE_NAME
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ExpenseApp@1';
+FLUSH PRIVILEGES;
+EOF
 VALIDATE $? "Setting up root password"
 
 
