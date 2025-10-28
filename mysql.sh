@@ -47,11 +47,36 @@ VALIDATE $? "Enabling MYSQL service"
 systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting MySQL server"
 
-sleep 10  # give MySQL time to initialize fully
+# === Configuration ===
+MYSQL_ROOT_PASSWORD="ExpenseApp@1"
 
-sudo mysql --connect-expired-password -uroot -p"$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}')" \
--e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'ExpenseApp@1'; FLUSH PRIVILEGES;"
-VALIDATE $? "Changing MySQL server password"
+echo "🔐 Securing MySQL installation..."
+
+# Run MySQL commands directly (requires sudo access)
+sudo mysql <<EOF
+-- Set root password and authentication method
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+
+-- Remove anonymous users
+DELETE FROM mysql.user WHERE User='';
+
+-- Disallow root login remotely
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+
+-- Remove test database
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test_%';
+
+-- Apply changes
+FLUSH PRIVILEGES;
+EOF
+
+if [ $? -eq 0 ]; then
+    echo "✅ MySQL secured successfully!"
+else
+    echo "❌ MySQL securing failed!"
+    exit 1
+fi
 
 
 
