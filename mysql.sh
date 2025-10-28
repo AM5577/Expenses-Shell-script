@@ -55,7 +55,15 @@ sleep 5
 echo "============================================"
 echo " Securing MySQL Installation "
 echo "============================================"
-sudo mysql_secure_installation --set-root-pass "$MYSQL_ROOT_PASSWORD"
+
+# Run SQL directly (works regardless of auth plugin)
+sudo mysql -e "
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+DELETE FROM mysql.user WHERE User='';
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+FLUSH PRIVILEGES;
+"
 
 echo "============================================"
 echo " MySQL Installation Completed Successfully "
