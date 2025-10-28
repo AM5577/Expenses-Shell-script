@@ -56,71 +56,26 @@ VALIDATE $? "Enabling MYSQL service"
 systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting MySQL server"
 
-# Get temporary password if available
-TEMP_PASS=$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}' | tail -1)
+# Wait briefly for service to fully start
+sleep 5
 
-# Check if root uses auth_socket plugin (no password)
-AUTH_PLUGIN=$(sudo mysql -Nse "SELECT plugin FROM mysql.user WHERE user='root' AND host='localhost';" 2>/dev/null)
+echo "============================================"
+echo " Securing MySQL Installation "
+echo "============================================"
 
-if [[ "$AUTH_PLUGIN" == "auth_socket" ]]; then
-    echo "Root user is using auth_socket — logging in without password..." &>>$LOG_FILE_NAME
-
-    sudo mysql <<EOF
+# Step 1: Connect via socket authentication (as system root) and switch to password auth
+sudo mysql -u root <<EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
-FLUSH PRIVILEGES;
-EOF
-
-elif [[ -n "$TEMP_PASS" ]]; then
-    echo "Using temporary password to set new root password..." &>>$LOG_FILE_NAME
-
-    mysql --connect-expired-password -u root -p"${TEMP_PASS}" <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
-FLUSH PRIVILEGES;
-EOF
-else
-    echo "Could not determine root authentication method or temporary password!" &>>$LOG_FILE_NAME
-    echo -e "$R Failed to secure MySQL root account $N"
-    exit 1
-fi
-
-# Now login with new root password and secure MySQL
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 DELETE FROM mysql.user WHERE User='';
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test_%';
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
 EOF
 
-if [ $? -eq 0 ]; then
-    echo -e "✅ MySQL secured successfully!"
-else
-    echo -e "❌ MySQL securing failed!"
-    exit 1
-fi
-🧠 How It Works
-Step	What It Does
-Detects MySQL auth plugin	Figures out whether root uses password or socket auth
-Uses proper login method	Either sudo mysql (for socket) or mysql -p<temp_password>
-Sets root password	Always changes root to use mysql_native_password
-Runs cleanup SQL	Removes anonymous users, disables remote root login, deletes test DB
-Logs all actions	To /var/log/expense-script-logs/mysql-<timestamp>.log
-
-🧪 To Run:
-bash
-Copy code
-chmod +x mysql.sh
-sudo ./mysql.sh
-If you’d like, I can extend this script next to:
-
-✅ Create a new database (expense_app)
-
-✅ Create a dedicated app user (e.g. expense_user with password)
-
-✅ Grant limited privileges
-
-Would you like that included?
-
+echo "============================================"
+echo " MySQL Installation Completed Successfully "
+echo " Root password: ${MYSQL_ROOT_PASSWORD}"
+echo "============================================"
 
 
 
