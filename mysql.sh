@@ -58,19 +58,17 @@ VALIDATE $? "Starting MySQL server"
 
 sleep 5
 
-echo "==> Setting up root password..."
-# Step 1: Connect using socket auth (works even when password isn’t set)
+# Wait for MySQL to start properly
+sleep 5
+
+# Set root password and secure installation non-interactively
 sudo mysql <<EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
-FLUSH PRIVILEGES;
-EOF
-
-echo "==> Cleaning up default users and test DB..."
-sudo mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
 EOF
 
-echo "✅ MySQL root password set to ${MYSQL_ROOT_PASSWORD}"
+echo "✅ MySQL root password set to '${MYSQL_ROOT_PASSWORD}' and installation secured."
