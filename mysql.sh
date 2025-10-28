@@ -58,13 +58,14 @@ VALIDATE $? "Starting MySQL server"
 
 sleep 5
 
-echo "Setting root password..."
-sudo mysql --socket=/var/lib/mysql/mysql.sock <<EOF
+echo "==> Setting up root password..."
+# Step 1: Connect using socket auth (works even when password isn’t set)
+sudo mysql <<EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
 FLUSH PRIVILEGES;
 EOF
 
-echo "Cleaning up default users and test DB..."
+echo "==> Cleaning up default users and test DB..."
 sudo mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
