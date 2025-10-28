@@ -41,7 +41,10 @@ echo "Script started executing at: $TIMESTAMP" &>>$LOG_FILE_NAME
 
 CHECK_ROOT
 
-dnf install mysql-server -y &>>$LOG_FILE_NAME
+dnf install -y https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+VALIDATE $? "Installing MYSQL repo"
+
+dnf install mysql-community-server -y &>>$LOG_FILE_NAME
 VALIDATE $? "Installing MYSQL server"
 
 systemctl enable --now mysqld &>>$LOG_FILE_NAME
@@ -55,15 +58,7 @@ sleep 5
 echo "============================================"
 echo " Securing MySQL Installation "
 echo "============================================"
-
-# Run SQL directly (works regardless of auth plugin)
-sudo mysql -e "
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-DELETE FROM mysql.user WHERE User='';
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-FLUSH PRIVILEGES;
-"
+sudo mysql_secure_installation --set-root-pass "$MYSQL_ROOT_PASSWORD"
 
 echo "============================================"
 echo " MySQL Installation Completed Successfully "
