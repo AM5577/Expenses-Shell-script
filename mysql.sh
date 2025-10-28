@@ -57,25 +57,27 @@ systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting MySQL server"
 
 sleep 5
-sudo dnf install -y expect
 
-expect <<EOF
-spawn mysql_secure_installation
-expect "Enter password for user root:"
-send "\r"
-expect "New password:"
-send "ExpenseApp@1\r"
-expect "Re-enter new password:"
-send "ExpenseApp@1\r"
-expect "Change the root password?"
-send "n\r"
-expect "Remove anonymous users?"
-send "y\r"
-expect "Disallow root login remotely?"
-send "y\r"
-expect "Remove test database and access to it?"
-send "y\r"
-expect "Reload privilege tables now?"
-send "y\r"
-expect eof
+sudo mysql <<EOF
+-- Set root password and authentication method
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+
+-- Remove anonymous users
+DELETE FROM mysql.user WHERE User='';
+
+-- Disallow root login remotely
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+
+-- Remove test database
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test_%';
+
+-- Apply changes
+FLUSH PRIVILEGES;
 EOF
+
+if [ $? -eq 0 ]; then
+    echo "✅ MySQL secured successfully!"
+else
+    echo "❌ MySQL securing failed!"
+    exit 1
