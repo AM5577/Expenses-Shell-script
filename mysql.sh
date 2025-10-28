@@ -49,15 +49,10 @@ VALIDATE $? "Starting MySQL server"
 
 sleep 10  # give MySQL time to initialize fully
 
-if mysql_secure_installation --help | grep -q -- "--set-root-pass"; then
-    mysql_secure_installation --set-root-pass ExpenseApp@1 &>>$LOG_FILE_NAME
-else
-    sudo mysql <<EOF &>>$LOG_FILE_NAME
-    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ExpenseApp@1';
-    FLUSH PRIVILEGES;
-EOF
-fi
-VALIDATE $? "Setting up root password"
+sudo mysql --connect-expired-password -uroot -p"$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}')" \
+-e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'ExpenseApp@1'; FLUSH PRIVILEGES;"
+VALIDATE $? "Changing MySQL server password"
+
 
 
 
