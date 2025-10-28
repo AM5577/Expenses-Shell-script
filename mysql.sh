@@ -77,7 +77,8 @@ FLUSH PRIVILEGES;
 EOF
 
 if [ $? -eq 0 ]; then
-    echo "✅ MySQL secured successfully!"
+    echo "MySQL secured successfully!"
 else
-    echo "❌ MySQL securing failed!"
-    exit 1
+    echo "MySQL securing failed!"
+    exit 
+fi
