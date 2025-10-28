@@ -47,6 +47,8 @@ VALIDATE $? "Enabling MYSQL service" &>>$LOG_FILE_NAME
 systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting mysql server"
 
-mysql_secure_installation --set-root-pass ExpenseApp@1
+sleep 5
+
+mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'ExpenseApp@1';" &>>$LOG_FILE_NAME
 VALIDATE$? "Setting up root password"
 
