@@ -50,5 +50,5 @@ VALIDATE $? "Starting mysql server"
 sleep 5
 
 mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'ExpenseApp@1';" &>>$LOG_FILE_NAME
-VALIDATE$? "Setting up root password"
+VALIDATE $? "Setting up root password"
 
