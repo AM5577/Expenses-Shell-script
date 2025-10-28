@@ -59,11 +59,17 @@ VALIDATE $? "Starting MySQL server"
 sleep 5
 
 echo "============================================"
-echo " Securing MySQL Installation "
+echo " 6. Setting up MySQL root user"
 echo "============================================"
-sudo mysql_secure_installation --set-root-pass "$MYSQL_ROOT_PASSWORD"
+sudo mysql --connect-expired-password <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+DELETE FROM mysql.user WHERE User='';
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+FLUSH PRIVILEGES;
+EOF
 
 echo "============================================"
-echo " MySQL Installation Completed Successfully "
+echo " ✅ MySQL Installation Completed Successfully"
 echo " Root password: ${MYSQL_ROOT_PASSWORD}"
 echo "============================================"
