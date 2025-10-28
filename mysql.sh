@@ -3,7 +3,7 @@
 USERID=$(id -u)
 R="\e[31m"
 G="\e[32m"
-Y="\e[33m]"
+Y="\e[33m"
 N="\e[0m"
 
 LOGS_FOLDER=/var/log/expense-script-logs
@@ -34,11 +34,11 @@ CHECK_ROOT(){
     fi
 }
 
-echo "Scrtipt started executing at: $TIMESTAMP" $>>$LOG_FILE_NAME
+echo "Script started executing at: $TIMESTAMP" &>>$LOG_FILE
 
 CHECK_ROOT
 
-dnf install mysql-server -y $>>$LOG_FILE_NAME
+dnf install mysql-server -y &>>$LOG_FILE
 VALIDATE $? "Installing MYSQL server"
 
 systemctl enable mysqld
