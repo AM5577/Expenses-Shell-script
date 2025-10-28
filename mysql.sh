@@ -41,13 +41,13 @@ CHECK_ROOT
 dnf install mysql-server -y &>>$LOG_FILE_NAME
 VALIDATE $? "Installing MYSQL server"
 
-systemctl enable mysqld
-VALIDATE $? "Enabling MYSQL service" &>>$LOG_FILE_NAME
+systemctl enable mysqld &>>$LOG_FILE_NAME
+VALIDATE $? "Enabling MYSQL service"
 
 systemctl start mysqld &>>$LOG_FILE_NAME
-VALIDATE $? "Starting mysql server"
+VALIDATE $? "Starting MySQL server"
 
-sleep 5
+sleep 10  # give MySQL time to initialize fully
 
 echo "Setting up MySQL root password..." &>>$LOG_FILE_NAME
 sudo mysql <<EOF &>>$LOG_FILE_NAME
@@ -55,5 +55,6 @@ ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ExpenseA
 FLUSH PRIVILEGES;
 EOF
 VALIDATE $? "Setting up root password"
+
 
 
