@@ -49,12 +49,16 @@ VALIDATE $? "Starting MySQL server"
 
 sleep 10  # give MySQL time to initialize fully
 
-echo "Setting up MySQL root password..." &>>$LOG_FILE_NAME
-sudo mysql <<EOF &>>$LOG_FILE_NAME
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ExpenseApp@1';
-FLUSH PRIVILEGES;
+if mysql_secure_installation --help | grep -q -- "--set-root-pass"; then
+    mysql_secure_installation --set-root-pass ExpenseApp@1 &>>$LOG_FILE_NAME
+else
+    sudo mysql <<EOF &>>$LOG_FILE_NAME
+    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ExpenseApp@1';
+    FLUSH PRIVILEGES;
 EOF
+fi
 VALIDATE $? "Setting up root password"
+
 
 
 
