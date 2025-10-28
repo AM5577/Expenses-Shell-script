@@ -34,15 +34,15 @@ CHECK_ROOT(){
     fi
 }
 
-echo "Script started executing at: $TIMESTAMP" &>>$LOG_FILE
+echo "Script started executing at: $TIMESTAMP" &>>$LOG_FILE_NAME
 
 CHECK_ROOT
 
-dnf install mysql-server -y &>>$LOG_FILE
+dnf install mysql-server -y &>>$LOG_FILE_NAME
 VALIDATE $? "Installing MYSQL server"
 
 systemctl enable mysqld
-VALIDATE $? "Enabling MYSQL service" &>>$LOG_FILE
+VALIDATE $? "Enabling MYSQL service" &>>$LOG_FILE_NAME
 
 systemctl start mysqld $>>$LOG_FILE_NAME
 VALIDATE $? "Starting mysql server"
