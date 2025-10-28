@@ -56,26 +56,36 @@ VALIDATE $? "Enabling MYSQL service"
 systemctl start mysqld &>>$LOG_FILE_NAME
 VALIDATE $? "Starting MySQL server"
 
-# Wait briefly for service to fully start
 sleep 5
+
+# ============================================
+# Secure MySQL Installation
+# ============================================
 
 echo "============================================"
 echo " Securing MySQL Installation "
 echo "============================================"
 
-# Step 1: Connect via socket authentication (as system root) and switch to password auth
-sudo mysql -u root <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
-DELETE FROM mysql.user WHERE User='';
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-FLUSH PRIVILEGES;
+sudo mysql_secure_installation --set-root-pass "$MYSQL_ROOT_PASSWORD" <<EOF
+y
+y
+y
+y
 EOF
 
-echo "============================================"
-echo " MySQL Installation Completed Successfully "
-echo " Root password: ${MYSQL_ROOT_PASSWORD}"
-echo "============================================"
+# ============================================
+# Verify Installation
+# ============================================
+
+if sudo systemctl is-active --quiet mysqld; then
+    echo "============================================"
+    echo " MySQL Installation Completed Successfully "
+    echo " Root password has been set securely."
+    echo "============================================"
+else
+    echo "MySQL service failed to start. Check logs with: sudo journalctl -u mysqld"
+    exit 1
+fi
 
 
 
