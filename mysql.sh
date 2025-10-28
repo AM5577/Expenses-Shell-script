@@ -44,6 +44,9 @@ CHECK_ROOT
 dnf install -y https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
 VALIDATE $? "Installing MYSQL repo"
 
+sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
+VALIDATE $? "Installing MYSQL key"
+
 dnf install mysql-community-server -y &>>$LOG_FILE_NAME
 VALIDATE $? "Installing MYSQL server"
 
